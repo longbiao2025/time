@@ -1,1 +1,41 @@
+name: 打包 Mac .app（无命令行窗口）
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: 下载你的代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python 版本
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装 PyInstaller
+        run: |
+          pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: 打包成 Mac .app（优化 Tkinter 兼容性）
+        run: |
+          pyinstaller --clean --windowed \
+            --name "倒计时2026" \
+            --hidden-import tkinter \
+            --hidden-import _tkinter \
+            --add-data "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/tkinter:tkinter" \
+            --argv-emulation \
+            --osx-bundle-identifier com.longbiao.countdown2026 \
+            "倒计时PY mac OS定稿2026.py"
+
+      - name: 上传打包好的 .app
+        uses: actions/upload-artifact@v4
+        with:
+          name: 倒计时2026-macOS-app
+          path: dist/倒计时2026.app
