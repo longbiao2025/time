@@ -1,4 +1,4 @@
-name: 打包 Mac .app（无命令行窗口）
+name: 打包 Mac .app（优化体积）
 
 on:
   push:
@@ -10,27 +10,36 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: 下载你的代码
+      - name: 下载代码
         uses: actions/checkout@v4
 
-      - name: 设置 Python 版本
+      - name: 设置 Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11'   # 换成 3.11，有时体积稍小
 
-      - name: 安装 PyInstaller
+      - name: 安装 PyInstaller 和 UPX
         run: |
           pip install --upgrade pip
           pip install pyinstaller
+          brew install upx   # 安装 UPX 压缩工具
 
-      - name: 打包成 Mac .app（无黑色命令行窗口）
+      - name: 打包（优化体积 + UPX 压缩）
         run: |
           pyinstaller --clean --windowed \
             --name "倒计时2026" \
-            --icon=bitbug_favicon.ico \
+            --hidden-import tkinter \
+            --hidden-import _tkinter \
+            --exclude-module tkinter.test \
+            --exclude-module unittest \
+            --exclude-module pydoc_data \
+            --exclude-module test \
+            --upx-dir=$(brew --prefix upx)/bin \
+            --argv-emulation \
+            --osx-bundle-identifier com.longbiao.countdown2026 \
             "倒计时PY mac OS定稿2026.py"
 
-      - name: 上传打包好的 .app
+      - name: 上传 .app
         uses: actions/upload-artifact@v4
         with:
           name: 倒计时2026-macOS-app
